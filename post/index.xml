@@ -18,7 +18,7 @@
       <pubDate>Sun, 07 Oct 2018 14:43:53 +0800</pubDate>
       
       <guid>https://flike.github.io/post/2/</guid>
-      <description>从零开始开发一个单机存储引擎 1.VDL Logstore概述 如何设计存储引擎，使得读写接口的性能足够高，如何保证在机器宕机时，存储引擎能够将已存储的数</description>
+      <description>1 VDL Logstore概述 如何设计存储引擎，使得读写接口的性能足够高，如何保证在机器宕机时，存储引擎能够将已存储的数据恢复到一个一致性状态。如</description>
     </item>
     
     <item>
