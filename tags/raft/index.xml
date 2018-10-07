@@ -14,10 +14,10 @@
     
     <item>
       <title>Raft的PreVote实现机制</title>
-      <link>https://flike.github.io/post/1/</link>
+      <link>https://flike.github.io/post/raft_prevote/</link>
       <pubDate>Sun, 07 Oct 2018 00:00:00 +0000</pubDate>
       
-      <guid>https://flike.github.io/post/1/</guid>
+      <guid>https://flike.github.io/post/raft_prevote/</guid>
       <description>1. 背景 在Basic Raft算法中，当一个Follower与其他节点网络隔离，如下图所示： Follower_2在electionTimeout</description>
     </item>
     

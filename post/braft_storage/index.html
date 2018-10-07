@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-cn" itemscope itemtype="http://schema.org/WebPage">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Braft的日志存储引擎实现分析 - 技术哲思 - 技术思考在此处停留</title>
+  
+
+<meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta name="MobileOptimized" content="width"/>
+<meta name="HandheldFriendly" content="true"/>
+
+
+<meta name="applicable-device" content="pc,mobile">
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="author" content="技术哲思" />
+  <meta name="description" content="1.架构设计 1.1 函数接口说明 日志存储引擎是用于存储raft lib产生的日志。提供的接口如下： 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25" />
+
+  <meta name="keywords" content="技术哲思, mysql, kingshard, raft" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.49" />
+
+
+<link rel="canonical" href="https://flike.github.io/post/braft_storage/" />
+
+
+
+<link rel="icon" href="/favicon.ico" />
+
+
+
+
+
+
+
+
+
+
+<link href="/dist/jane.min.css?v=2.7.0" rel="stylesheet">
+
+
+
+
+<meta property="og:title" content="Braft的日志存储引擎实现分析" />
+<meta property="og:description" content="1.架构设计 1.1 函数接口说明 日志存储引擎是用于存储raft lib产生的日志。提供的接口如下： 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://flike.github.io/post/braft_storage/" /><meta property="article:published_time" content="2018-10-07T18:37:51&#43;08:00"/>
+<meta property="article:modified_time" content="2018-10-07T18:37:51&#43;08:00"/>
+
+<meta itemprop="name" content="Braft的日志存储引擎实现分析">
+<meta itemprop="description" content="1.架构设计 1.1 函数接口说明 日志存储引擎是用于存储raft lib产生的日志。提供的接口如下： 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25">
+
+
+<meta itemprop="datePublished" content="2018-10-07T18:37:51&#43;08:00" />
+<meta itemprop="dateModified" content="2018-10-07T18:37:51&#43;08:00" />
+<meta itemprop="wordCount" content="2234">
+
+
+
+<meta itemprop="keywords" content="storage," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Braft的日志存储引擎实现分析"/>
+<meta name="twitter:description" content="1.架构设计 1.1 函数接口说明 日志存储引擎是用于存储raft lib产生的日志。提供的接口如下： 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+
+
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">技术哲思</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/">首页</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/post/">归档</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/tags/">标签</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/categories/">分类</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/about/">关于我</a>
+          
+        
+      </li>
+    
+  </ul>
+</nav>
+
+
+  
+    
+
+
+
+
+
+
+  <link rel="stylesheet" href="/lib/photoswipe/photoswipe.min.css" />
+  <link rel="stylesheet" href="/lib/photoswipe/default-skin/default-skin.min.css" />
+
+
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+  
+
+  
+
+  <header id="header" class="header container">
+    <div class="logo-wrapper">
+  <a href="/" class="logo">
+    
+      技术哲思
+    
+  </a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/">首页</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/post/">归档</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/tags/">标签</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/categories/">分类</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/about/">关于我</a>
+          
+
+        
+
+      </li>
+    
+    
+  </ul>
+</nav>
+
+  </header>
+
+  <div id="mobile-panel">
+    <main id="main" class="main bg-llight">
+      <div class="content-wrapper">
+        <div id="content" class="content container">
+          <article class="post bg-white">
+    
+    <header class="post-header">
+      <h1 class="post-title">Braft的日志存储引擎实现分析</h1>
+      
+      <div class="post-meta">
+        <span class="post-time"> 2018-10-07 </span>
+        <div class="post-category">
+            <a href="https://flike.github.io/categories/storage/"> storage </a>
+            
+          </div>
+        <span class="more-meta"> 约 2234 字 </span>
+          <span class="more-meta"> 预计阅读 5 分钟 </span>
+
+        
+        
+          <span id="busuanzi_container_page_pv">
+            | 阅读 <span id="busuanzi_value_page_pv"></span>
+          </span>
+        
+
+        
+        
+      </div>
+    </header>
+
+    
+    
+<div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#1-架构设计">1.架构设计</a>
+<ul>
+<li><a href="#1-1-函数接口说明">1.1 函数接口说明</a></li>
+<li><a href="#1-2-存储引擎的数据组织">1.2 存储引擎的数据组织</a></li>
+</ul></li>
+<li><a href="#2-核心流程实现">2.核心流程实现</a>
+<ul>
+<li><a href="#2-1-存储引擎的接口函数">2.1 存储引擎的接口函数</a></li>
+<li><a href="#2-2-存储引擎的初始化">2.2 存储引擎的初始化</a></li>
+<li><a href="#2-3-写数据流程">2.3 写数据流程</a></li>
+<li><a href="#2-4-读数据流程">2.4 读数据流程</a></li>
+<li><a href="#2-5-删除数据流程">2.5 删除数据流程</a></li>
+</ul></li>
+<li><a href="#4-总结">4.总结</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+
+    
+    <div class="post-content">
+      
+
+<h2 id="1-架构设计">1.架构设计</h2>
+
+<h3 id="1-1-函数接口说明">1.1 函数接口说明</h3>
+
+<p>日志存储引擎是用于存储raft lib产生的日志。提供的接口如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">class LogStorage {
+public:
+    virtual ~LogStorage() {}
+
+    // init logstorage, check consistency and integrity
+    virtual int init(ConfigurationManager* configuration_manager) = 0;
+
+    // first log index in log
+    virtual int64_t first_log_index() = 0;
+
+    // last log index in log
+    virtual int64_t last_log_index() = 0;
+
+    // get logentry by index
+    virtual LogEntry* get_entry(const int64_t index) = 0;
+
+    // get logentry&#39;s term by index
+    virtual int64_t get_term(const int64_t index) = 0;
+
+    // append entries to log
+    virtual int append_entry(const LogEntry* entry) = 0;
+
+    // append entries to log, return append success number
+    virtual int append_entries(const std::vector&lt;LogEntry*&gt;&amp; entries) = 0;
+
+    // delete logs from storage&#39;s head, [first_log_index, first_index_kept) will be discarded
+    virtual int truncate_prefix(const int64_t first_index_kept) = 0;
+
+    // delete uncommitted logs from storage&#39;s tail, (last_index_kept, last_log_index] will be discarded
+    virtual int truncate_suffix(const int64_t last_index_kept) = 0;
+
+    // Drop all the existing logs and reset next log index to |next_log_index|.
+    // This function is called after installing snapshot from leader
+    virtual int reset(const int64_t next_log_index) = 0;
+
+    // Create an instance of this kind of LogStorage with the parameters encoded 
+    // in |uri|
+    // Return the address referenced to the instance on success, NULL otherwise.
+    virtual LogStorage* new_instance(const std::string&amp; uri) const = 0;
+
+    static LogStorage* create(const std::string&amp; uri);
+};</pre></td></tr></table>
+</div>
+</div>
+<p>LogStorage只是一个抽象类，只定义了函数接口。具体的日志操作由SegmentLogStorage实现。</p>
+
+<h3 id="1-2-存储引擎的数据组织">1.2 存储引擎的数据组织</h3>
+
+<p>SegmentLogStorage实现了LogStorage的全部接口。其数据组织格式如下：
+<img src="https://upload-images.jianshu.io/upload_images/66307-26d6c05e299f2316.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png" /></p>
+
+<ul>
+<li>segment名字为first_raft_index-last_raft_index，表示该segment的raft index范围。</li>
+<li>只有最后一个segment可读写，其文件名为log_inprogress_first_raft_index，其他segment只读。</li>
+<li>segment文件对应的index entry，Segment文件初始化时构造出来，存储在内存中。不会持久化到磁盘。因此追加一次Log Entry只会引起一次磁盘操作。</li>
+</ul>
+
+<h2 id="2-核心流程实现">2.核心流程实现</h2>
+
+<h3 id="2-1-存储引擎的接口函数">2.1 存储引擎的接口函数</h3>
+
+<h3 id="2-2-存储引擎的初始化">2.2 存储引擎的初始化</h3>
+
+<p>存储引擎的初始化操作主要检查文件信息，将segment的索引信息加载到内存，为读写操作做准备。
+<img src="https://upload-images.jianshu.io/upload_images/66307-8e690f46ac9d5454.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png" /></p>
+
+<p>函数主要功能如下所述：</p>
+
+<ul>
+<li>init函数是SegmentLogStorage初始化的入口函数，调用load_meta函数，list_segment函数和load_segment函数。</li>
+<li>load_meta函数：从log_meta文件中读取从SegmentLogStorage的第一个raft index值。</li>
+<li>list_segment函数：建立起segment的范围信息，并将范围异常的segment文件删除。范围信息存储在一个map表中，map的key是first_raft_index,value是segment对象。</li>
+<li>load_segments函数：构建出每个segment对应的索引项，通过解析segement内容完成。索引项存储在一个vector中。至此，就可以根据范围信息来定位到某个raft_index对应的文件偏移。</li>
+</ul>
+
+<h3 id="2-3-写数据流程">2.3 写数据流程</h3>
+
+<p>写数据到存储引擎，会涉及到两个函数:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma"> // append entry to log
+    int append_entry(const LogEntry* entry);
+ // append entries to log, return success append number
+   int append_entries(const std::vector&lt;LogEntry*&gt;&amp; entries);</pre></td></tr></table>
+</div>
+</div>
+<p>append_entry表示追加单条Log Entry到日志存储引擎，append_entries用于同时追加多条Log Entry到日志存储引擎。两个函数主要流程相差不大，我们以append_entries为例，分析一下写入Log Entry的主要流程。函数流程图如下所示：
+<img src="https://upload-images.jianshu.io/upload_images/66307-84bb92948772875b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png" /></p>
+
+<ul>
+<li>检查日志连续性：主要检查last_raft_index 是否和追加的Log Entry保持连续。</li>
+<li>获取Last_Segment：检查last_segment是否超过Max_Segment_Size，如果超过则进行rolling操作（保存最后一个segment，并生成一个新的segment）。如果文件大小未超过Max_Segment_Size，则直接返回。</li>
+<li>循环追加日志：追加Log Entry到文件末尾。</li>
+<li>Last_Segment强制刷盘：调用fsync函数强制刷盘。</li>
+</ul>
+
+<h3 id="2-4-读数据流程">2.4 读数据流程</h3>
+
+<p>根据raft_index读取对应的raft Log，根据我们前面提到的索引信息，braft很容易实现，流程图如下所示：
+<img src="https://upload-images.jianshu.io/upload_images/66307-ff64112d601ce14c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png" /></p>
+
+<p>get_entry是入口函数，get_segment函数主要是通过raft_index来定位到segment，通过之前建立的Map范围信息很容易定位到。然后根据每个segment的Vector索引数组，定位到raft_index对应的文件偏移信息。然后读取文件。</p>
+
+<h3 id="2-5-删除数据流程">2.5 删除数据流程</h3>
+
+<p>删除数据分为两类：</p>
+
+<ul>
+<li>从前往后删除，对应的函数是：</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">SegmentLogStorage::truncate_prefix(const int64_t first_index_kept)</pre></td></tr></table>
+</div>
+</div>
+<p>truncate_prefix函数先将first_index_kept保存到Log_meta文件中，这样保证了即使后续的文件删除操作失败时，也可以知道整个日志的起始raft_index是多少。保存完first_index_kept之后，将first_index_kept之前的segment文件全部删除。</p>
+
+<ul>
+<li>从后往前删除，对应的函数是：</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">int SegmentLogStorage::truncate_suffix(const int64_t last_index_kept) </pre></td></tr></table>
+</div>
+</div>
+<p>主要用于raft lib中删除未达成一致的Log Entry。根据last_index_kept找到对应的文件偏移，然后截断文件。如果跨文件，还需要删除最后一个segment文件，然后再截断之前一个segment的内容。</p>
+
+<p>##3.测试
+在test/test_log.cpp文件中，包含SegmentLogStorage类中主要的接口函数的单元测试，对理解SegmentLogStorage有比较大的帮助。</p>
+
+<h2 id="4-总结">4.总结</h2>
+
+<p>Braft的日志存储引擎，主要用于存储raft log。当执行完一次snapshot操作后，就可以进行Log Compaction。将snapshot之前的raft log全部删除。这使得Braft可以将Log的索引信息全部存储在内存中，因为存储引擎中的Raft Log Entry不会太大。这样追加或读取Raft Log只需要一次磁盘操作，性能方面有保证。</p>
+
+    </div>
+
+    
+    
+<div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">技术哲思</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">2018-10-07</span>
+  </p>
+  
+  <p class="copyright-item">
+    <span class="item-title">许可协议</span>
+    <span class="item-content"><a rel="license noopener" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">CC BY-NC-ND 4.0</a></span>
+  </p>
+</div>
+
+    
+    
+
+    <footer class="post-footer">
+      <div class="post-tags">
+          <a href="https://flike.github.io/tags/storage/">storage</a>
+          
+        </div>
+
+      
+      <nav class="post-nav">
+        
+        
+          <a class="next" href="/post/storage_arch/">
+            <span class="next-text nav-default">从零开始开发一个单机存储引擎</span>
+            <span class="prev-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+
+  
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+        </div>
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:hiflike@gmail.com" rel="me noopener" class="iconfont icon-email"
+        title="email">
+      </a>
+      <a href="https://github.com/flike" rel="me noopener" class="iconfont icon-github"
+        title="github" target="_blank">
+      </a>
+      <a href="https://www.weibo.com/chenfei001" rel="me noopener" class="iconfont icon-weibo"
+        title="weibo" target="_blank">
+      </a>
+  <a href="https://flike.github.io/index.xml" rel="noopener alternate" type="application/rss&#43;xml" class="iconfont icon-rss"
+    title="rss" target="_blank">
+  </a>
+  </div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - <a class="theme-link" href="https://github.com/xianmin/hugo-theme-jane">Jane</a>
+  </span>
+
+  <span class="copyright-year">
+    &copy;
+    
+      2014 -
+    2018
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span><span class="author">
+        技术哲思
+        
+      </span></span>
+
+  
+  
+    <span id="busuanzi_container">
+      访客数/访问量：<span id="busuanzi_value_site_uv"></span>/<span id="busuanzi_value_site_pv"></span>
+    </span>
+  
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+<script type="text/javascript" src="/lib/jquery/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout-1.0.1.min.js"></script>
+<script type="text/javascript" src="/dist/jane.min.js?v=2.7.0"></script>
+
+
+
+
+
+  
+    <script type="text/javascript" src="/js/load-photoswipe.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe.min.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe-ui-default.min.js"></script>
+  
+
+
+
+
+  <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

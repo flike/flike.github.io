@@ -10,14 +10,21 @@
   </url>
   
   <url>
-    <loc>https://flike.github.io/post/2/</loc>
+    <loc>https://flike.github.io/post/braft_storage/</loc>
+    <lastmod>2018-10-07T18:37:51+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://flike.github.io/post/storage_arch/</loc>
     <lastmod>2018-10-07T14:43:53+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://flike.github.io/post/1/</loc>
+    <loc>https://flike.github.io/post/raft_prevote/</loc>
     <lastmod>2018-10-07T00:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -38,7 +45,7 @@
   
   <url>
     <loc>https://flike.github.io/post/</loc>
-    <lastmod>2018-10-07T14:43:53+08:00</lastmod>
+    <lastmod>2018-10-07T18:37:51+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -59,14 +66,14 @@
   
   <url>
     <loc>https://flike.github.io/tags/storage/</loc>
-    <lastmod>2018-10-07T14:43:53+08:00</lastmod>
+    <lastmod>2018-10-07T18:37:51+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://flike.github.io/categories/storage/</loc>
-    <lastmod>2018-10-07T14:43:53+08:00</lastmod>
+    <lastmod>2018-10-07T18:37:51+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>

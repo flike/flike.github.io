@@ -7,17 +7,26 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>技术哲思</copyright>
-    <lastBuildDate>Sun, 07 Oct 2018 14:43:53 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 07 Oct 2018 18:37:51 +0800</lastBuildDate>
     
 	<atom:link href="https://flike.github.io/categories/storage/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
+      <title>Braft的日志存储引擎实现分析</title>
+      <link>https://flike.github.io/post/braft_storage/</link>
+      <pubDate>Sun, 07 Oct 2018 18:37:51 +0800</pubDate>
+      
+      <guid>https://flike.github.io/post/braft_storage/</guid>
+      <description>1.架构设计 1.1 函数接口说明 日志存储引擎是用于存储raft lib产生的日志。提供的接口如下： 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25</description>
+    </item>
+    
+    <item>
       <title>从零开始开发一个单机存储引擎</title>
-      <link>https://flike.github.io/post/2/</link>
+      <link>https://flike.github.io/post/storage_arch/</link>
       <pubDate>Sun, 07 Oct 2018 14:43:53 +0800</pubDate>
       
-      <guid>https://flike.github.io/post/2/</guid>
+      <guid>https://flike.github.io/post/storage_arch/</guid>
       <description>1 VDL Logstore概述 如何设计存储引擎，使得读写接口的性能足够高，如何保证在机器宕机时，存储引擎能够将已存储的数据恢复到一个一致性状态。如</description>
     </item>
     
