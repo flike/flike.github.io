@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>技术哲思</copyright>
-    <lastBuildDate>Sun, 07 Oct 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 07 Oct 2018 19:43:53 +0800</lastBuildDate>
     
 	<atom:link href="https://flike.github.io/categories/raft/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Etcd raft lib的snapshot处理流程</title>
+      <link>https://flike.github.io/post/ectd_snapshot/</link>
+      <pubDate>Sun, 07 Oct 2018 19:43:53 +0800</pubDate>
+      
+      <guid>https://flike.github.io/post/ectd_snapshot/</guid>
+      <description>snapshot的是系统状态的完整快照，其他系统接收和回放snapshot，将自身数据恢复到一个一致性状态。本文介绍一下etcd raft lib如何</description>
+    </item>
     
     <item>
       <title>Raft的PreVote实现机制</title>

@@ -10,6 +10,20 @@
   </url>
   
   <url>
+    <loc>https://flike.github.io/post/ectd_snapshot/</loc>
+    <lastmod>2018-10-07T19:43:53+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://flike.github.io/post/lease/</loc>
+    <lastmod>2018-10-07T19:43:53+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://flike.github.io/post/braft_storage/</loc>
     <lastmod>2018-10-07T18:37:51+08:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -44,22 +58,36 @@
   </url>
   
   <url>
+    <loc>https://flike.github.io/tags/lease/</loc>
+    <lastmod>2018-10-07T19:43:53+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://flike.github.io/categories/lease/</loc>
+    <lastmod>2018-10-07T19:43:53+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://flike.github.io/post/</loc>
-    <lastmod>2018-10-07T18:37:51+08:00</lastmod>
+    <lastmod>2018-10-07T19:43:53+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://flike.github.io/tags/raft/</loc>
-    <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+    <lastmod>2018-10-07T19:43:53+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://flike.github.io/categories/raft/</loc>
-    <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+    <lastmod>2018-10-07T19:43:53+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>

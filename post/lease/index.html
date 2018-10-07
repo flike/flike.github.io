@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-cn" itemscope itemtype="http://schema.org/WebPage">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>分布式租约机制 - 技术哲思 - 技术思考在此处停留</title>
+  
+
+<meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta name="MobileOptimized" content="width"/>
+<meta name="HandheldFriendly" content="true"/>
+
+
+<meta name="applicable-device" content="pc,mobile">
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="author" content="技术哲思" />
+  <meta name="description" content="分布式租约机制 1.什么是租约 租约（lease）在分布式中一般描述如下： Lease 是由授权者授予的在一段时间内的承诺。 授权者一旦发出 lease，则无论" />
+
+  <meta name="keywords" content="技术哲思, mysql, kingshard, raft" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.49" />
+
+
+<link rel="canonical" href="https://flike.github.io/post/lease/" />
+
+
+
+<link rel="icon" href="/favicon.ico" />
+
+
+
+
+
+
+
+
+
+
+<link href="/dist/jane.min.css?v=2.7.0" rel="stylesheet">
+
+
+
+
+<meta property="og:title" content="分布式租约机制" />
+<meta property="og:description" content="分布式租约机制 1.什么是租约 租约（lease）在分布式中一般描述如下： Lease 是由授权者授予的在一段时间内的承诺。 授权者一旦发出 lease，则无论" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://flike.github.io/post/lease/" /><meta property="article:published_time" content="2018-10-07T19:43:53&#43;08:00"/>
+<meta property="article:modified_time" content="2018-10-07T19:43:53&#43;08:00"/>
+
+<meta itemprop="name" content="分布式租约机制">
+<meta itemprop="description" content="分布式租约机制 1.什么是租约 租约（lease）在分布式中一般描述如下： Lease 是由授权者授予的在一段时间内的承诺。 授权者一旦发出 lease，则无论">
+
+
+<meta itemprop="datePublished" content="2018-10-07T19:43:53&#43;08:00" />
+<meta itemprop="dateModified" content="2018-10-07T19:43:53&#43;08:00" />
+<meta itemprop="wordCount" content="2398">
+
+
+
+<meta itemprop="keywords" content="lease," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="分布式租约机制"/>
+<meta name="twitter:description" content="分布式租约机制 1.什么是租约 租约（lease）在分布式中一般描述如下： Lease 是由授权者授予的在一段时间内的承诺。 授权者一旦发出 lease，则无论"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+
+
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">技术哲思</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/">首页</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/post/">归档</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/tags/">标签</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/categories/">分类</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/about/">关于我</a>
+          
+        
+      </li>
+    
+  </ul>
+</nav>
+
+
+  
+    
+
+
+
+
+
+
+  <link rel="stylesheet" href="/lib/photoswipe/photoswipe.min.css" />
+  <link rel="stylesheet" href="/lib/photoswipe/default-skin/default-skin.min.css" />
+
+
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+  
+
+  
+
+  <header id="header" class="header container">
+    <div class="logo-wrapper">
+  <a href="/" class="logo">
+    
+      技术哲思
+    
+  </a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/">首页</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/post/">归档</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/tags/">标签</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/categories/">分类</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://flike.github.io/about/">关于我</a>
+          
+
+        
+
+      </li>
+    
+    
+  </ul>
+</nav>
+
+  </header>
+
+  <div id="mobile-panel">
+    <main id="main" class="main bg-llight">
+      <div class="content-wrapper">
+        <div id="content" class="content container">
+          <article class="post bg-white">
+    
+    <header class="post-header">
+      <h1 class="post-title">分布式租约机制</h1>
+      
+      <div class="post-meta">
+        <span class="post-time"> 2018-10-07 </span>
+        <div class="post-category">
+            <a href="https://flike.github.io/categories/lease/"> lease </a>
+            
+          </div>
+        <span class="more-meta"> 约 2398 字 </span>
+          <span class="more-meta"> 预计阅读 5 分钟 </span>
+
+        
+        
+          <span id="busuanzi_container_page_pv">
+            | 阅读 <span id="busuanzi_value_page_pv"></span>
+          </span>
+        
+
+        
+        
+      </div>
+    </header>
+
+    
+    
+<div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+<ul>
+<li><a href="#分布式租约机制">分布式租约机制</a>
+<ul>
+<li><a href="#1-什么是租约">1.什么是租约</a>
+<ul>
+<li><a href="#1-1-lease机制容错能力">1.1 Lease机制容错能力</a></li>
+</ul></li>
+<li><a href="#1-2-lease服务中时钟同步问题">1.2 lease服务中时钟同步问题</a></li>
+<li><a href="#2-租约在分布式系统中的应用">2.租约在分布式系统中的应用</a>
+<ul>
+<li><a href="#2-2-租约机制确定节点的状态">2.2 租约机制确定节点的状态</a>
+<ul>
+<li><a href="#2-2-1-通过心跳无法很好判断节点状态">2.2.1 通过心跳无法很好判断节点状态</a></li>
+<li><a href="#2-2-2-双主问题的解决">2.2.2 双主问题的解决</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#3-总结">3.总结</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+
+    
+    <div class="post-content">
+      
+
+<h1 id="分布式租约机制">分布式租约机制</h1>
+
+<h2 id="1-什么是租约">1.什么是租约</h2>
+
+<p>租约（lease）在分布式中一般描述如下：</p>
+
+<ul>
+<li>Lease 是由授权者授予的在一段时间内的承诺。</li>
+<li>授权者一旦发出 lease，则无论接受方是否收到，也无论后续接收方处于何种状态，只要 lease 不过期，授权者一定遵守承诺，按承诺的时间、内容执行。</li>
+<li>接收方在有效期内可以使用颁发者的承诺，只要 lease 过期，接收方放弃授权，不再继续执行，要重新申请Lease。</li>
+<li>可以通过版本号、时间周期，或者到某个固定时间点认为Lease证书失效</li>
+</ul>
+
+<h3 id="1-1-lease机制容错能力">1.1 Lease机制容错能力</h3>
+
+<ul>
+<li><p>通过引入有效期，Lease 机制有非常好的容错网络异常。 Lease 颁发过程只依赖于网络可以单向通信，即使接收方无法向颁发者发送消息，也不影响 lease的颁发。由于 lease 的有效期是一个确定的时间点，lease 的语义与发送 lease 的具体时间无关，所以同一个 lease 可以被颁发者不断重复向接受方发送。即使颁发者偶尔发送 lease 失败，颁发者也可以简单的通过重发的办法解决。一旦 lease 被接收方成功接受，后续 lease 机制不再依赖于网络通信，即使网络完全中断 lease 机制也不受影响。</p></li>
+
+<li><p>Lease 机制能较好的容错节点宕机。如果颁发者宕机，则宕机的颁发者通常无法改变之前的承诺，不会影响 lease 的正确性。在颁发者机恢复后，如果颁发者恢复出了之前的 lease 信息，颁发者可以继续遵守 lease 的承诺。如果颁发者无法恢复 lease信息，则只需等待一个最大的 lease 超时时间就可以使得所有的 lease 都失效，从而不破坏 lease 机制。例如上节中的 cache 系统的例子中，一旦服务器宕机，肯定不会修改元数据，重新恢复后，只需等待一个最大的 lease 超时时间，所有节点上的缓存信息都将被清空。对于接受方宕机的情况，颁发者不需要做更多的容错处理，只需等待 lease 过期失效，就可以收回承诺，实践中也就是收回之前赋予的权限、身份等。</p></li>
+
+<li><p>lease 机制不依赖于存储。颁发者可以持久化颁发过的 lease 信息，从而在宕机恢复后可以使得在有效期的 lease 继续有效。但这对于 lease 机制只是一个优化，如之前的分析，即使颁发者没有持久化 lease 信息，也可以通过等待一个最大的 lease 时间的方式使得之前所有颁发的 lease 失效，从而保证机制继续有效。</p></li>
+</ul>
+
+<h2 id="1-2-lease服务中时钟同步问题">1.2 lease服务中时钟同步问题</h2>
+
+<p>如果颁发者的时钟比接收者的时钟慢，则当接收者认为 lease 已经过期的时候，颁发者依旧认为 lease 有效。接收者可以用在 lease 到期前申请新的 lease 的方式解决这个问题。</p>
+
+<p>如果颁发者的时钟比接收者的时钟快，则当颁发者认为 lease 已经过期的时候，接收者依旧认为 lease 有效，颁发者可能将 lease颁发给其他节点，造成承诺失效，影响系统的正确性。对于这种时钟不同步，实践中的通常做法是将颁发者的有效期设置得比接收者的略大，只需大过时钟误差就可以避免对 lease 的有效性的影响。</p>
+
+<h2 id="2-租约在分布式系统中的应用">2.租约在分布式系统中的应用</h2>
+
+<p>###2.1 租约机制保证缓存的一致性</p>
+
+<p>服务器发出Lease后，会保证在Lease的有效期内不改变数据。这样收到Lease的Client在有效期内可以放心地使用数据。在这个有效期内，Client缓存的数据和服务器上的数据是一致的。</p>
+
+<p>存在的问题和解决办法：</p>
+
+<p>1)服务器修改元数据时，需要阻塞所有的读请求，此时服务器不能发出新的Lease。以防止新发出的Lease保证的数据与服务器刚才修改的数据不一致。</p>
+
+<p>解决方法：读请求到来时，直接返回数据，不颁发Lease</p>
+
+<p>2)服务器需要等待直至所有的Client的Lease都过期后，再才颁发新“修改”后的Lease。因此，此时服务器上的数据修改了，生成了一个新的Lease版本，需要等到Client上所有的老Lease过期后，该新Lease版本才能颁布给Client。</p>
+
+<p>解决方法：服务器主动通知持久Lease的Client放弃当前的Lease，并请求新Lease</p>
+
+<h3 id="2-2-租约机制确定节点的状态">2.2 租约机制确定节点的状态</h3>
+
+<p>通过一个例子来讨论这个问题：在一个 primary-secondary 架构的系统中，有三个节点 A、B、C 互为副本，其中有一个节点为 primary，且同一时刻只能有一个 primary 节点。另有一个节点 Q 负责判断节点 A、B、C的状态，一旦 Q 发现 primary 异常，节点 Q 将选择另一个节点作为 primary。假设最开始时节点 A为 primary，B、C 为 secondary。节点 Q 需要判断节点 A、B、C 的状态是否正常。</p>
+
+<h4 id="2-2-1-通过心跳无法很好判断节点状态">2.2.1 通过心跳无法很好判断节点状态</h4>
+
+<p>节点 A、B、C 可以周期性的向 Q 发送心跳信息，如果节点 Q 超过一段时间收不到某个节点的心跳则认为这个节点异常。这种方法的问题是假如节点 Q 收不到节点 A 的心跳，除了节点 A 本身的异常外，也有可能是因为节点 Q 与节点 A 之间的网络中断导致的。在工程实践中，更大的可能性不是网络中断，而是节点 Q 与节点 A 之间的网络拥塞造成的所谓“闪断”，“闪断”往往很快可以恢复。另一种原因甚至是节点 Q 的机器异常，以至于处理节点 A 的心跳被延迟了，以至于节点 Q 认为节点 A 没有发送心跳。假设节点 A 本身工作正常，但 Q 与节点 A 之间的网络暂时中断，节点 A 与节点 B、C 之间的网络正常。此时节点 Q 认为节点 A 异常，重新选择节点 B 作为新的 primary，并通知节点 A、B、C 新的 primary 是节点 B。由于节点 Q 的通知消息到达节点 A、B、C 的顺序无法确定，假如先到达 B，则在这一时刻，系统中同时存在两个工作中的 primary，一个是 A、另一个是 B。假如此时 A、B 都接收外部请求并与 C 同步数据，会产生严重的数据错误。上述即所谓“双主”问题。</p>
+
+<h4 id="2-2-2-双主问题的解决">2.2.2 双主问题的解决</h4>
+
+<p>由中心节点向其他节点发送 lease，若某个节点持有有效的 lease，则认为该节点正常可以提供服务。如节点 A、 B、 C 依然周期性的发送 heart beat 报告自身状态，节点 Q 收到 heart beat后发送一个 lease，表示节点 Q 确认了节点 A、B、C 的状态，并允许节点在 lease 有效期内正常工作。节点 Q 可以给 primary 节点一个特殊的 lease，表示节点可以作为 primary 工作。一旦节点 Q 希望切换新的 primary，则只需等前一个 primary 的 lease 过期，则就可以安全的颁发新的 lease 给新的primary 节点，而不会出现“双主”问题。</p>
+
+<h2 id="3-总结">3.总结</h2>
+
+<p>本文将Lease机制的本质及在分布式系统中的主要应用梳理出来了，希望对读者在分布式系统中使用lease机制有帮助。</p>
+
+    </div>
+
+    
+    
+<div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">技术哲思</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">2018-10-07</span>
+  </p>
+  
+  <p class="copyright-item">
+    <span class="item-title">许可协议</span>
+    <span class="item-content"><a rel="license noopener" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">CC BY-NC-ND 4.0</a></span>
+  </p>
+</div>
+
+    
+    
+
+    <footer class="post-footer">
+      <div class="post-tags">
+          <a href="https://flike.github.io/tags/lease/">lease</a>
+          
+        </div>
+
+      
+      <nav class="post-nav">
+        
+          <a class="prev" href="/post/ectd_snapshot/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Etcd raft lib的snapshot处理流程</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        
+          <a class="next" href="/post/braft_storage/">
+            <span class="next-text nav-default">Braft的日志存储引擎实现分析</span>
+            <span class="prev-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+
+  
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+        </div>
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:hiflike@gmail.com" rel="me noopener" class="iconfont icon-email"
+        title="email">
+      </a>
+      <a href="https://github.com/flike" rel="me noopener" class="iconfont icon-github"
+        title="github" target="_blank">
+      </a>
+      <a href="https://www.weibo.com/chenfei001" rel="me noopener" class="iconfont icon-weibo"
+        title="weibo" target="_blank">
+      </a>
+  <a href="https://flike.github.io/index.xml" rel="noopener alternate" type="application/rss&#43;xml" class="iconfont icon-rss"
+    title="rss" target="_blank">
+  </a>
+  </div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - <a class="theme-link" href="https://github.com/xianmin/hugo-theme-jane">Jane</a>
+  </span>
+
+  <span class="copyright-year">
+    &copy;
+    
+      2014 -
+    2018
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span><span class="author">
+        技术哲思
+        
+      </span></span>
+
+  
+  
+    <span id="busuanzi_container">
+      访客数/访问量：<span id="busuanzi_value_site_uv"></span>/<span id="busuanzi_value_site_pv"></span>
+    </span>
+  
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+<script type="text/javascript" src="/lib/jquery/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout-1.0.1.min.js"></script>
+<script type="text/javascript" src="/dist/jane.min.js?v=2.7.0"></script>
+
+
+
+
+
+  
+    <script type="text/javascript" src="/js/load-photoswipe.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe.min.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe-ui-default.min.js"></script>
+  
+
+
+
+
+  <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
