@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Raft on 技术哲思 - 技术思考在此处停留</title>
+    <link>https://flike.github.io/categories/raft/</link>
+    <description>Recent content in Raft on 技术哲思 - 技术思考在此处停留</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>技术哲思</copyright>
+    <lastBuildDate>Sun, 07 Oct 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://flike.github.io/categories/raft/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Raft的PreVote实现机制</title>
+      <link>https://flike.github.io/post/1/</link>
+      <pubDate>Sun, 07 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://flike.github.io/post/1/</guid>
+      <description>1. 背景 在Basic Raft算法中，当一个Follower与其他节点网络隔离，如下图所示： Follower_2在electionTimeout</description>
+    </item>
+    
+  </channel>
+</rss>

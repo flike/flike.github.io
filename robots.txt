@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://flike.github.io/sitemap.xml
